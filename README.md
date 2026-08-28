@@ -46,18 +46,18 @@ key is **private** and must never be committed.
 
    ```sh
    openssl req -x509 -newkey rsa:4096 -nodes \
-     -keyout kernel-signing-key.pem \
+     -keyout certs/kernel-signing-key.pem \
      -out certs/kernel-signing-cert.pem \
      -days 3650 -subj "/CN=Muak Kernel Signing Key"
    ```
 
    `certs/kernel-signing-cert.pem` is the **public** certificate and is committed.
-   `kernel-signing-key.pem` is the **private** certificate and is gitignored.
+   `certs/kernel-signing-key.pem` is the **private** key and is gitignored.
 
 2. Build with signing enabled by mounting the key as a Docker secret:
 
    ```sh
-   KERNEL_SIGNING="--secret id=kernel_key,src=kernel-signing-key.pem" REGISTRY="localhost:5000" PUSH="true" just build
+   KERNEL_SIGNING="--secret id=kernel_key,src=certs/kernel-signing-key.pem" REGISTRY="localhost:5000" PUSH="true" just build
    ```
 
 In CI, `KERNEL_SIGNING_KEY` is supplied as a repository secret and materialized

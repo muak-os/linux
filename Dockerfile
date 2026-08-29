@@ -112,6 +112,7 @@ ARG TARGETARCH
 
 COPY --link --from=kernel-build /src/arch /src/arch
 COPY cmdline/cmdline-${TARGETARCH}.txt /src/cmdline
+COPY sysctl/sysctl-${TARGETARCH}.conf /src/sysctl.conf
 
 RUN <<EOF
 set -euo pipefail
@@ -121,7 +122,11 @@ else
   cp /src/arch/x86/boot/bzImage /vmlinuz
 fi
 
-cp /src/cmdline /cmdline
+{
+  tr '\n' ' ' < /src/cmdline
+  awk -F= '/^[^#]/{printf "sysctl.%s=%s ", $1, $2}' /src/sysctl.conf
+  printf '\n'
+} > /cmdline
 EOF
 
 # ─────────────────────────────────────────────────────────────────────────────

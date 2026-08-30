@@ -64,7 +64,7 @@ RUN --mount=type=cache,target=/root/.ccache \
 RUN --mount=type=secret,id=kernel_key,target=/run/secrets/kernel-signing-key.pem <<EOF
 set -euo pipefail
 if [ "${TARGETARCH}" = "arm64" ]; then
-  KERNEL_PATH="arch/arm64/boot/Image"
+  KERNEL_PATH="arch/arm64/boot/vmlinuz.efi"
 else
   KERNEL_PATH="arch/x86/boot/bzImage"
 fi
@@ -117,7 +117,7 @@ COPY sysctl/sysctl-${TARGETARCH}.conf /src/sysctl.conf
 RUN <<EOF
 set -euo pipefail
 if [ "${TARGETARCH}" = "arm64" ]; then
-  cp /src/arch/arm64/boot/Image /vmlinuz
+  cp /src/arch/arm64/boot/vmlinuz.efi /vmlinuz
 else
   cp /src/arch/x86/boot/bzImage /vmlinuz
 fi

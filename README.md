@@ -37,35 +37,27 @@ podman run -d -p 5000:5000 --name registry docker.io/library/registry:3
 REGISTRY="localhost:5000" PUSH="true" just build
 ```
 
-## Secure Boot Signing
+## Kernel Signing
 
-The kernel is PE-signed with `sbsign` when a signing key is provided. The signing
-key is **private** and must never be committed.
+The kernel is PE-signed with `sbsign` when a signing key is provided.
 
 1. Generate a key/cert pair (once):
 
-   ```sh
-   openssl req -x509 -newkey rsa:4096 -nodes \
-     -keyout certs/kernel-signing-key.pem \
-     -out certs/kernel-signing-cert.pem \
-     -days 3650 -subj "/CN=Muak Kernel Signing Key"
-   ```
+```sh
+openssl req -x509 -newkey rsa:4096 -nodes \
+  -keyout certs/kernel-signing-key.pem \
+  -out certs/kernel-signing-cert.pem \
+  -days 3650 -subj "/CN=Muak Kernel Signing Key"
+```
 
-   `certs/kernel-signing-cert.pem` is the **public** certificate and is committed.
-   `certs/kernel-signing-key.pem` is the **private** key and is gitignored.
+`certs/kernel-signing-cert.pem` is the **public** certificate and is committed.
+`certs/kernel-signing-key.pem` is the **private** key and is gitignored.
 
 2. Build with signing enabled by mounting the key as a Docker secret:
 
-   ```sh
-   KERNEL_SIGNING="--secret id=kernel_key,src=certs/kernel-signing-key.pem" REGISTRY="localhost:5000" PUSH="true" just build
-   ```
-
-In CI, `KERNEL_SIGNING_KEY` is supplied as a repository secret and materialized
-to `/tmp/kernel-signing-key.pem` for the duration of the build (see
-`.github/workflows/build.yaml`). The temporary key is removed in a cleanup step.
-
-To enroll the public cert in a Secure Boot setup (MOK / DB), use
-`certs/kernel-signing-cert.pem` (convert to DER if your firmware requires it).
+```sh
+KERNEL_SIGNING="--secret id=kernel_key,src=certs/kernel-signing-key.pem" REGISTRY="localhost:5000" PUSH="true" just build
+```
 
 ## Hardening
 

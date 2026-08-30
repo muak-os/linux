@@ -74,10 +74,8 @@ build:
         .
 
     if [ "{{ container_runtime }}" = "podman" ] && [ "{{ push }}" = "true" ]; then
-        podman push --tls-verify=false "${image}"
-        if [ "{{ latest }}" = "true" ]; then
-            podman push --tls-verify=false "{{ registry }}/linux:latest{{ arch }}"
-        fi
+        {{ container_runtime }} push "${image}"
+        if [ "{{ latest }}" = "true" ]; then {{ container_runtime }} push "{{ registry }}/linux:latest{{ arch }}"; fi
     fi
 
 # Check kernel config, cmdline & sysctl against KSPP security hardening recommendations

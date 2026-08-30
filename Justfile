@@ -22,8 +22,9 @@ latest := env_var_or_default("LATEST", "false")
 # Architecture
 
 [private]
-_arch_env := env_var_or_default("ARCH", "amd64")
-oci_arch := if _arch_env == "arm64" { "arm64" } else { "amd64" }
+_arch := env_var_or_default("ARCH", "")
+arch := if _arch != "" { "-" + _arch } else { "" }
+oci_arch := if _arch == "arm64" { "arm64" } else { "amd64" }
 
 # Container runtime
 
@@ -41,10 +42,10 @@ reset := '\e[0m'
 # Build (and optionally push) the Muak Linux kernel OCI image
 [script]
 build:
-    image="{{ registry }}/linux:{{ tag }}"
+    image="{{ registry }}/linux:{{ tag }}{{ arch }}"
     tags="--tag ${image}"
     if [ "{{ latest }}" = "true" ]; then
-        tags="${tags} --tag {{ registry }}/linux:latest"
+        tags="${tags} --tag {{ registry }}/linux:latest{{ arch }}"
     fi
 
     if [ "{{ container_runtime }}" = "podman" ]; then
@@ -75,7 +76,7 @@ build:
     if [ "{{ container_runtime }}" = "podman" ] && [ "{{ push }}" = "true" ]; then
         podman push --tls-verify=false "${image}"
         if [ "{{ latest }}" = "true" ]; then
-            podman push --tls-verify=false "{{ registry }}/linux:latest"
+            podman push --tls-verify=false "{{ registry }}/linux:latest{{ arch }}"
         fi
     fi
 

@@ -16,19 +16,20 @@ set script-interpreter := ["bash", "-euo", "pipefail"]
 alpine_version := "3.24"
 registry := env_var_or_default("REGISTRY", "ghcr.io/muak-os")
 tag := env_var_or_default("TAG", "latest")
-push := env_var_or_default("PUSH", "false")
+tools := env_var_or_default("TOOLS", "ghcr.io/muak-os/tools:latest")
+push := env_var_or_default("PUSH", "true")
 latest := env_var_or_default("LATEST", "false")
 
 # Architecture
 
 [private]
 _arch := env_var_or_default("ARCH", "")
-arch := if _arch != "" { "-" + _arch } else { "" }
 oci_arch := if _arch == "arm64" { "arm64" } else { "amd64" }
 
 # Container runtime
 
 container_runtime := env_var_or_default("CONTAINER_RUNTIME", "podman")
+push_arg := if container_runtime == "podman" { "" } else { if push == "true" { "--push" } else { "" } }
 
 # Colors
 
@@ -36,28 +37,29 @@ cyan := '\e[36m'
 reset := '\e[0m'
 
 # ─────────────────────────────────────────────────────────────────────────────
-# Recipes
+# Main Recipes
 # ─────────────────────────────────────────────────────────────────────────────
 
-# Build (and optionally push) the Muak Linux kernel OCI image
+# Full local development build (oci → annotate)
+dev: oci annotate
+
+# ─────────────────────────────────────────────────────────────────────────────
+# OCI Images
+# ─────────────────────────────────────────────────────────────────────────────
+
+# Build (and optionally push) the linux kernel OCI image
 [script]
-build:
-    image="{{ registry }}/linux:{{ tag }}{{ arch }}"
+oci:
+    image="{{ registry }}/linux:{{ tag }}"
     tags="--tag ${image}"
     if [ "{{ latest }}" = "true" ]; then
-        tags="${tags} --tag {{ registry }}/linux:latest{{ arch }}"
+        tags="${tags} --tag {{ registry }}/linux:latest"
     fi
 
     if [ "{{ container_runtime }}" = "podman" ]; then
         cmd="podman build"
-        push_flags=""
     else
         cmd="docker buildx build --provenance=false"
-        if [ "{{ push }}" = "true" ]; then
-            push_flags="--push"
-        else
-            push_flags=""
-        fi
     fi
 
     printf "{{ cyan }}Building kernel image: {{ registry }}/linux (push={{ push }}, latest={{ latest }}){{ reset }}\n"
@@ -65,9 +67,10 @@ build:
         --platform=linux/{{ oci_arch }} \
         --progress=auto \
         --build-arg ALPINE_VERSION={{ alpine_version }} \
+        --build-arg TOOLS={{ tools }} \
         --build-arg SOURCE_DATE_EPOCH=0 \
         ${KERNEL_SIGNING:-} \
-        ${push_flags} \
+        {{ push_arg }} \
         $(just _cache-from linux) $(just _cache-to linux) \
         ${tags} \
         --file Dockerfile \
@@ -75,8 +78,40 @@ build:
 
     if [ "{{ container_runtime }}" = "podman" ] && [ "{{ push }}" = "true" ]; then
         {{ container_runtime }} push "${image}"
-        if [ "{{ latest }}" = "true" ]; then {{ container_runtime }} push "{{ registry }}/linux:latest{{ arch }}"; fi
+        if [ "{{ latest }}" = "true" ]; then {{ container_runtime }} push "{{ registry }}/linux:latest"; fi
     fi
+
+# Merge per-platform images into a multi-arch OCI index
+[script]
+merge *sources:
+    tags=""
+    if [ "{{ latest }}" = "true" ]; then
+        tags="--tag latest"
+    fi
+    {{ container_runtime }} run --rm --network=host \
+        -e KOCI_REGISTRY_USERNAME -e KOCI_REGISTRY_PASSWORD \
+        {{ tools }} \
+        /koci merge \
+            --image "{{ registry }}/linux" \
+            --tag "{{ tag }}" \
+            ${tags} \
+            {{ sources }}
+
+# Annotate an OCI image in the registry with per-entry sizes.
+[arg("image", long="image")]
+annotate image=(registry + "/linux:" + tag):
+    @printf "{{ cyan }}Annotating OCI image {{ image }}{{ reset }}\n"
+    {{ container_runtime }} run --rm --network=host \
+        -e KOCI_REGISTRY_USERNAME -e KOCI_REGISTRY_PASSWORD \
+        {{ tools }} \
+        /koci annotate \
+            --image "{{ image }}" \
+            --annotation dev.muak.sizes \
+            --exclude lib/modules
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Testing
+# ─────────────────────────────────────────────────────────────────────────────
 
 # Check kernel config, cmdline & sysctl against KSPP security hardening recommendations
 [script]

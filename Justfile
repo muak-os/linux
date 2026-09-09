@@ -16,7 +16,7 @@ set script-interpreter := ["bash", "-euo", "pipefail"]
 alpine_version := "3.24"
 registry := env_var_or_default("REGISTRY", "ghcr.io/muak-os")
 tag := env_var_or_default("TAG", "latest")
-tools := env_var_or_default("TOOLS", "ghcr.io/muak-os/tools:latest")
+tools := env_var_or_default("TOOLS", registry + "/tools:latest")
 push := env_var_or_default("PUSH", "true")
 latest := env_var_or_default("LATEST", "false")
 

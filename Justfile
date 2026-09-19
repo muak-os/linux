@@ -15,10 +15,11 @@ set script-interpreter := ["bash", "-euo", "pipefail"]
 
 alpine_version := "3.24"
 registry := env_var_or_default("REGISTRY", "ghcr.io/muak-os")
-tag := env_var_or_default("TAG", "latest")
+tag := env_var_or_default("TAG", kernel_version)
 tools := env_var_or_default("TOOLS", registry + "/tools:latest")
 push := env_var_or_default("PUSH", "true")
 latest := env_var_or_default("LATEST", "false")
+kernel_version := env_var_or_default("KERNEL_VERSION", "7.2.6")
 
 # Architecture
 
@@ -67,6 +68,7 @@ oci:
         --platform=linux/{{ oci_arch }} \
         --progress=auto \
         --build-arg ALPINE_VERSION={{ alpine_version }} \
+        --build-arg KERNEL_VERSION={{ kernel_version }} \
         --build-arg TOOLS={{ tools }} \
         --build-arg SOURCE_DATE_EPOCH=0 \
         ${KERNEL_SIGNING:-} \

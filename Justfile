@@ -3,9 +3,9 @@
 # Prerequisites: docker/podman, just, git
 # Run `just --list` for available recipes
 
-set positional-arguments := true
 set shell := ["bash", "-euo", "pipefail", "-c"]
 set script-interpreter := ["bash", "-euo", "pipefail"]
+set positional-arguments
 
 # ─────────────────────────────────────────────────────────────────────────────
 # Configuration
@@ -19,7 +19,7 @@ tag := env_var_or_default("TAG", kernel_version)
 tools := env_var_or_default("TOOLS", registry + "/tools:latest")
 push := env_var_or_default("PUSH", "true")
 latest := env_var_or_default("LATEST", "false")
-kernel_version := env_var_or_default("KERNEL_VERSION", "7.2.6")
+kernel_version := env_var_or_default("KERNEL_VERSION", "7.2.8")
 
 # Architecture
 

@@ -16,7 +16,7 @@ set positional-arguments
 alpine_version := "3.24"
 registry := env_var_or_default("REGISTRY", "ghcr.io/muak-os")
 tag := env_var_or_default("TAG", kernel_version)
-toolchain := env_var_or_default("TOOLCHAIN", registry + "/toolchain:latest")
+toolchain := env_var_or_default("TOOLCHAIN", "ghcr.io/muak-os/toolchain@sha256:aa9208691a4799dc34b42acb9a14aef4d7599d554ecaac1e36c9c76319cbd960")
 push := env_var_or_default("PUSH", "true")
 latest := env_var_or_default("LATEST", "false")
 kernel_version := env_var_or_default("KERNEL_VERSION", "7.2.8")

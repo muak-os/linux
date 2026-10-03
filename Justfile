@@ -16,7 +16,7 @@ set positional-arguments
 alpine_version := "3.24"
 registry := env_var_or_default("REGISTRY", "ghcr.io/muak-os")
 tag := env_var_or_default("TAG", kernel_version)
-tools := env_var_or_default("TOOLS", registry + "/tools:latest")
+toolchain := env_var_or_default("TOOLCHAIN", registry + "/toolchain:latest")
 push := env_var_or_default("PUSH", "true")
 latest := env_var_or_default("LATEST", "false")
 kernel_version := env_var_or_default("KERNEL_VERSION", "7.2.8")
@@ -69,7 +69,7 @@ oci:
         --progress=auto \
         --build-arg ALPINE_VERSION={{ alpine_version }} \
         --build-arg KERNEL_VERSION={{ kernel_version }} \
-        --build-arg TOOLS={{ tools }} \
+        --build-arg TOOLCHAIN={{ toolchain }} \
         --build-arg SOURCE_DATE_EPOCH=0 \
         ${KERNEL_SIGNING:-} \
         {{ push_arg }} \
@@ -92,7 +92,7 @@ merge *sources:
     fi
     {{ container_runtime }} run --rm --network=host \
         -e KOCI_REGISTRY_USERNAME -e KOCI_REGISTRY_PASSWORD \
-        {{ tools }} \
+        {{ toolchain }} \
         /koci merge \
             --image "{{ registry }}/linux" \
             --tag "{{ tag }}" \
@@ -105,7 +105,7 @@ annotate image=(registry + "/linux:" + tag):
     @printf "{{ cyan }}Annotating OCI image {{ image }}{{ reset }}\n"
     {{ container_runtime }} run --rm --network=host \
         -e KOCI_REGISTRY_USERNAME -e KOCI_REGISTRY_PASSWORD \
-        {{ tools }} \
+        {{ toolchain }} \
         /koci annotate \
             --image "{{ image }}" \
             --annotation dev.muak.sizes \

@@ -18,7 +18,6 @@ registry := env_var_or_default("REGISTRY", "ghcr.io/muak-os")
 tag := env_var_or_default("TAG", kernel_version)
 toolchain := env_var_or_default("TOOLCHAIN", "ghcr.io/muak-os/toolchain@sha256:b5202e06f797ab99a766617238d181fede148fa8f83a15d218b33599752de4fa")
 push := env_var_or_default("PUSH", "true")
-latest := env_var_or_default("LATEST", "false")
 kernel_version := env_var_or_default("KERNEL_VERSION", "7.2.11")
 
 # Architecture
@@ -53,9 +52,6 @@ dev: oci repack
 oci:
     image="{{ registry }}/linux:{{ tag }}"
     tags="--tag ${image}"
-    if [ "{{ latest }}" = "true" ]; then
-        tags="${tags} --tag {{ registry }}/linux:latest"
-    fi
 
     if [ "{{ container_runtime }}" = "podman" ]; then
         cmd="podman build"
@@ -63,7 +59,7 @@ oci:
         cmd="docker buildx build --provenance=false"
     fi
 
-    printf "{{ cyan }}Building kernel image: {{ registry }}/linux (push={{ push }}, latest={{ latest }}){{ reset }}\n"
+    printf "{{ cyan }}Building kernel image: {{ registry }}/linux (push={{ push }}){{ reset }}\n"
     ${cmd} \
         --platform=linux/{{ oci_arch }} \
         --progress=auto \
@@ -80,23 +76,17 @@ oci:
 
     if [ "{{ container_runtime }}" = "podman" ] && [ "{{ push }}" = "true" ]; then
         {{ container_runtime }} push "${image}"
-        if [ "{{ latest }}" = "true" ]; then {{ container_runtime }} push "{{ registry }}/linux:latest"; fi
     fi
 
 # Merge per-platform images into a multi-arch OCI index
 [script]
 merge *sources:
-    tags=""
-    if [ "{{ latest }}" = "true" ]; then
-        tags="--tag latest"
-    fi
     {{ container_runtime }} run --rm --network=host \
         -e KOCI_REGISTRY_USERNAME -e KOCI_REGISTRY_PASSWORD \
         {{ toolchain }} \
         /koci merge \
             --image "{{ registry }}/linux" \
             --tag "{{ tag }}" \
-            ${tags} \
             {{ sources }}
 
 # Repack an OCI image's layers into eStargz, in place.

@@ -16,7 +16,7 @@ set positional-arguments
 alpine_version := "3.24"
 registry := env_var_or_default("REGISTRY", "ghcr.io/muak-os")
 tag := env_var_or_default("TAG", kernel_version)
-toolchain := env_var_or_default("TOOLCHAIN", "ghcr.io/muak-os/toolchain@sha256:aa9208691a4799dc34b42acb9a14aef4d7599d554ecaac1e36c9c76319cbd960")
+toolchain := env_var_or_default("TOOLCHAIN", "ghcr.io/muak-os/toolchain@sha256:b5202e06f797ab99a766617238d181fede148fa8f83a15d218b33599752de4fa")
 push := env_var_or_default("PUSH", "true")
 latest := env_var_or_default("LATEST", "false")
 kernel_version := env_var_or_default("KERNEL_VERSION", "7.2.11")
@@ -41,8 +41,8 @@ reset := '\e[0m'
 # Main Recipes
 # ─────────────────────────────────────────────────────────────────────────────
 
-# Full local development build (oci → annotate)
-dev: oci annotate
+# Full local development build (oci -> repack)
+dev: oci repack
 
 # ─────────────────────────────────────────────────────────────────────────────
 # OCI Images
@@ -99,17 +99,15 @@ merge *sources:
             ${tags} \
             {{ sources }}
 
-# Annotate an OCI image in the registry with per-entry sizes.
+# Repack an OCI image's layers into eStargz, in place.
 [arg("image", long="image")]
-annotate image=(registry + "/linux:" + tag):
-    @printf "{{ cyan }}Annotating OCI image {{ image }}{{ reset }}\n"
+repack image=(registry + "/linux:" + tag):
+    @printf "{{ cyan }}Repacking OCI image {{ image }}{{ reset }}\n"
     {{ container_runtime }} run --rm --network=host \
         -e KOCI_REGISTRY_USERNAME -e KOCI_REGISTRY_PASSWORD \
         {{ toolchain }} \
-        /koci annotate \
-            --image "{{ image }}" \
-            --annotation dev.muak.sizes \
-            --exclude lib/modules
+        /koci repack \
+            --image "{{ image }}"
 
 # ─────────────────────────────────────────────────────────────────────────────
 # Testing

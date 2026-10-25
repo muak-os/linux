@@ -41,7 +41,7 @@ WORKDIR /src
 
 RUN <<EOF
 set -euo pipefail
-: "${KERNEL_VERSION:?KERNEL_VERSION build-arg is required (e.g. --build-arg KERNEL_VERSION=7.2.6)}"
+: "${KERNEL_VERSION:?KERNEL_VERSION build-arg is required (e.g. --build-arg KERNEL_VERSION=X.X.X)}"
 MAJOR_VERSION=$(echo "${KERNEL_VERSION}" | cut -d. -f1)
 wget -q "https://cdn.kernel.org/pub/linux/kernel/v${MAJOR_VERSION}.x/linux-${KERNEL_VERSION}.tar.xz"
 wget -q "https://cdn.kernel.org/pub/linux/kernel/v${MAJOR_VERSION}.x/sha256sums.asc"

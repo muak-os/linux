@@ -18,7 +18,7 @@ registry := env_var_or_default("REGISTRY", "ghcr.io/muak-os")
 tag := env_var_or_default("TAG", kernel_version)
 toolchain := env_var_or_default("TOOLCHAIN", "ghcr.io/muak-os/toolchain@sha256:c18a288141bf4745151ae83d0d5f05d875a102c5348a12d5ab89fa94b4f1c3a0")
 push := env_var_or_default("PUSH", "true")
-kernel_version := env_var_or_default("KERNEL_VERSION", "7.3")
+kernel_version := env_var_or_default("KERNEL_VERSION", "7.3.4")
 
 # Architecture
 
